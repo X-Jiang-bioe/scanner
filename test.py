@@ -1,4 +1,5 @@
 import tellurium as te
+from load import load
 
 mod = """
 model test
@@ -14,18 +15,10 @@ model test
     k1 = 1.0;
 end
 """
-# for element in r.keys():
-#     print(element)
+model = load(mod)
 
-r = te.loada(mod)
-# r = \
-# te.roadrunner.extended_roadrunner.ExtendedRoadRunner(te.antimonyToSBML(mod))
-# data = r.simulate(0,1,100)
-# print(r.getFloatingSpeciesIds())
-# print("_____")
-# r.setGlobalParameterByName()
-# print(r.getFloatingSpeciesConcentrationIds())
+print(model.list_parameters())
 
-# print(r.simulate(0,1,100)["[S1]"])
-r.setValues(['S1', 'S2'], [5., 5.])
-print(r.getFloatingSpeciesAmountsNamedArray()[0])
+a = model.simulate(0,10,100)
+
+print(a)

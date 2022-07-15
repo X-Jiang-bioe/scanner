@@ -1,1 +1,1 @@
-from .load import load
+from scanner.load import load

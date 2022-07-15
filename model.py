@@ -1,10 +1,12 @@
 import string
 import tellurium as te
-import utils
+# import utils
 
 
-DEFAULT_SCAN_RANGE = [i for i in range(10)]
+DEFAULT_SCAN_RANGE = [i for i in range(11)]
 DEFAULT_SIM_PARAMETERS = (0, 10, 100)
+SCAN_TYPES = ['linear', 'logarithmic', 'exponential',
+              'multiplicative', 'custom']
 
 
 def default_target(data):
@@ -21,9 +23,21 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
     Attributes
     ----------
     scan_target(NamedArray)-> any : function
-        Function used to defnine what is examined during the parameter scan
-        takes in the output of .ExtendedRoadRunner.simulate() and returns
-        the target
+        Function used to defnine what is examined during the parameter scan.
+        Takes in the output of .ExtendedRoadRunner.simulate() and returns
+        the target.
+        Initialized using self.set_target
+
+    results : list
+        list of outputs of self.scan_target function
+
+    tracker : list
+        list of parameters that were passed to the model for simulation
+
+    scan_range()-> list : function
+        Function used to define the range of a parameter scan.
+        Takes in the self.results
+        Initialized using self.set_range
 
     sim_parameters : tuple
         arguments to pass down to .ExtendedRoadRunner.simulate
@@ -47,27 +61,31 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         selects the scan target, accepts a function
         that manipulates NamedArray output of ExtendedRoadRunner.simulate()
 
-    set_range(discrete = False, *args, **kwargs)
-        sets up the range across witch to run simulations with a given
-        set of parameters accepts lists or a function to return a timepoint
+    set_range(scanRange, isUniform = True)
+        selects the range/ranges for the parameters during the scan,
+        accepts a list of values to pass to the scanner or a function that
+        returns uses the output of target function to return the next step for
+        a given parameter
+        for isUniform = False, list of lists order must correspond to the order
+        of self.scan_parameterIds
 
     scan(save = False)
         runs the parameter scan, executes a dry run(no saving) by default
 
     _display_state()
-        internal function that prints out information about the object after
-        an action
+        internal function; handles the terminal display updates during a
+        parameter scan
     -------
     """
     def __init__(self, rr_model):  # only takes in sbml format
 
         # setup BEFORE the scan
-        super().__init__(self, rr_model)
+        super().__init__(rr_model)
         # self.parameterIds = self.getFloatingSpeciesIds()
         # self._parameterConcentrationIds = \
         #     self.getFloatingSpeciesConcentrationIds()
         self.scan_target = default_target
-        self.scan_step = default_step
+        self.scan_range = DEFAULT_SCAN_RANGE
         self.scan_parameterIds = None
         self.sim_parameters = DEFAULT_SIM_PARAMETERS
 
@@ -78,7 +96,7 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         return None
 
     def list_parameters(self):
-        return (print(self.getFloatingSpeciesIds()))
+        return (super().getFloatingSpeciesIds())
 
     def scan(self, *simulate_parameters):
         return
@@ -98,8 +116,17 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
     def set_target(self, target):
         if type(target) is string:
             self.target = (lambda data:  data[target])
+            #  return the simulation results of a given target species
         else:
             self.target = target
+
+    def set_scan_range(self, *range_args, type="linear", dependent=False):
+        # if type(range) is list:
+        #     self.scan_range = (lambda x: range[len(self.results)])
+        #     #  return the value based on # of completed loops
+        # else:
+        #     self.scan_range = range
+        return None
 
     # def linear_step():
     #     step = 0
@@ -107,7 +134,7 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
     def save(self, path):
         return
 
-    def _runExperiment(self, params):
-        return
+    # def _runExperiment(self, params):
+    #     return
 
-    def
+    # def
