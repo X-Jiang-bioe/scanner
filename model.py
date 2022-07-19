@@ -3,14 +3,19 @@ import tellurium as te
 # import utils
 
 
-DEFAULT_SCAN_RANGE = [i for i in range(11)]
+DEFAULT_SCAN_RANGE = [0.5, 1, 2]
 DEFAULT_SIM_PARAMETERS = (0, 10, 100)
 SCAN_TYPES = ['linear', 'logarithmic', 'exponential',
               'multiplicative', 'custom']
 
 
 def default_target(data):
-    return data
+    '''
+    Accepts the roadrunner.simulate output
+
+    Retunrns the final species values of the simulation
+    '''
+    return data[0][1:]
 
 
 class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
@@ -81,9 +86,7 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
 
         # setup BEFORE the scan
         super().__init__(rr_model)
-        # self.parameterIds = self.getFloatingSpeciesIds()
-        # self._parameterConcentrationIds = \
-        #     self.getFloatingSpeciesConcentrationIds()
+
         self.scan_target = default_target
         self.scan_range = DEFAULT_SCAN_RANGE
         self.scan_parameterIds = None
@@ -96,13 +99,18 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         return None
 
     def list_parameters(self):
-        return (super().getFloatingSpeciesIds())
+        species = super().getFloatingSpeciesIds()
+        constants = super().getGlobalParameterIds()
+        return (species + constants)
 
-    def scan(self, *simulate_parameters):
+    def list_parameters_concentrations(self):
+        return (super().getFloatingSpeciesConcentrationIds())
+
+    def scan(self):
         return
 
     def reset_scanner(self):
-        self.resetAll()
+        super().resetAll()
         self.scan_parameterIds = None
         self.sim_parameters = DEFAULT_SIM_PARAMETERS
         self.target = default_target
@@ -120,7 +128,7 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         else:
             self.target = target
 
-    def set_scan_range(self, *range_args, type="linear", dependent=False):
+    def set_scan_range(self, *range_args, type="linear", uniform=True):
         # if type(range) is list:
         #     self.scan_range = (lambda x: range[len(self.results)])
         #     #  return the value based on # of completed loops
@@ -128,13 +136,10 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         #     self.scan_range = range
         return None
 
-    # def linear_step():
-    #     step = 0
-    #     return step
     def save(self, path):
         return
 
-    # def _runExperiment(self, params):
-    #     return
+    def _runExperiment(self, params):
+        super().simulate(params)
 
     # def
