@@ -114,3 +114,75 @@ class doe_tool():
             self.runOneFactorStudy(
                 deviations, initial_values=current_parameter_values)
             return
+
+
+def _linear_range(start, end, points):
+    """
+    Returns a list of equally spaced values of length
+    'points' between 'start' and end' in a x=y linear fashion
+
+    Parameters
+    ----------
+    start: float
+        The first value of the range
+
+    end: float
+        Last value of the range
+
+    points: int
+        The total number of points (at least 2)
+
+    Returns
+    -------
+    range_values: list of float
+        The values to be passed to the scanner
+    """
+    return None
+
+
+def _exp_range(start, end, points):
+    """
+    Returns a list of equally spaced values of length
+    'points' between 'start' and end' in a x=e^y exponential fashion
+
+    Parameters
+    ----------
+    start: float
+        The first value of the range
+
+    end: float
+        Last value of the range
+
+    points: int
+        The total number of points (at least 2)
+
+    Returns
+    -------
+    range_values: list of float
+        The values to be passed to the scanner
+    """
+    return None
+
+
+def _log_range(start, end, points):
+    """
+    Returns a list of equally spaced values of length
+    'points' between 'start' and end' in a x=log(y) logarithmic fashion
+
+    Parameters
+    ----------
+    start: float
+        The first value of the range
+
+    end: float
+        Last value of the range
+
+    points: int
+        The total number of points (at least 2)
+
+    Returns
+    -------
+    range_values: list of float
+        The values to be passed to the scanner
+    """
+    return None

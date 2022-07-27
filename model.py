@@ -91,10 +91,12 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         self.scan_range = DEFAULT_SCAN_RANGE
         self.scan_parameterIds = None
         self.sim_parameters = DEFAULT_SIM_PARAMETERS
+        self.uniform_scan = True
 
         # parameters filled DURING scan
         self.tracker = []  # what values were passed to model
-        self.results = []  # what was the return of the target function
+        self.output = []  # what was the return of the target function
+        self.results = {}  # ouput/initial simulation
 
         return None
 
@@ -115,7 +117,8 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         self.sim_parameters = DEFAULT_SIM_PARAMETERS
         self.target = default_target
         self.tracker = []
-        self.results = []
+        self.output = []
+        self.results = {}
         return
 
     def set_parameters(self, parameters):
@@ -123,17 +126,28 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
 
     def set_target(self, target):
         if type(target) is string:
-            self.target = (lambda data:  data[target])
-            #  return the simulation results of a given target species
+            self.target = (lambda data:  data[target][-1])
+            #  return the simulation result of a given target species
         else:
             self.target = target
 
     def set_scan_range(self, *range_args, type="linear", uniform=True):
-        # if type(range) is list:
-        #     self.scan_range = (lambda x: range[len(self.results)])
-        #     #  return the value based on # of completed loops
-        # else:
-        #     self.scan_range = range
+        self.uniform_scan = uniform
+        if type(range_args[0]) is list:
+            # unpacks the list(s), probably unnecessary
+            self.scan_range = [item for item in range_args]
+        else:
+            self.scan_range = []
+            # need to put the check for whether or not *range_args is
+            # divisible by 3 (not too many/too few arguments)
+            l = len(range_args)
+            lis = []
+            # !!! need a case for 3 args, below is for 3+ args
+            for i in range(0, l-2, 3):
+                lis.append(range_args[i: i+3])
+            for params in lis:
+                # call to the functions from utils to get the lists
+                None
         return None
 
     def save(self, path):
