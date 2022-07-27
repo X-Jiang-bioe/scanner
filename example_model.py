@@ -20,7 +20,7 @@ model feedback
     k2 = .3
     k3 = .7
     B = 0.1
-    X = 1
+    X = .1
 
 end
 """
@@ -33,19 +33,30 @@ data = model.simulate(0,100,100)
 # model['X'] = 5
 # print(model.getFloatingSpeciesAmountsNamedArray())
 dats = []
-for i in range(0, 15, 1):
+for i in [0.5, 1, 2]:
+    initial = .1
     model.reset()
-    model['X'] = i*.1
+    model['X'] = initial * i
     data = model.simulate(0,20,100)
     dats.append(data)
-
-# print(dats)
 
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
 for data in dats:
     ax.plot(data['time'], data['[X]'])
-plt.savefig('example1.png')
+plt.savefig('images/example1.png')
 
-# --------------Plot for something else----------------
+# --------------Plot for specified range----------------
 
+for i in range(0,20, 1):
+    initial = .1
+    model.reset()
+    model['X'] = initial * i
+    data = model.simulate(0,20,100)
+    dats.append(data)
+
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+for data in dats:
+    ax.plot(data['time'], data['[X]'])
+plt.savefig('images/example2.png')
