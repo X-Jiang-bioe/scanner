@@ -48,6 +48,7 @@ plt.savefig('images/example1.png')
 
 # --------------Plot for specified range----------------
 
+dats = []
 for i in range(0,20, 1):
     initial = .1
     model.reset()
@@ -60,3 +61,29 @@ ax = fig.add_subplot(1,1,1)
 for data in dats:
     ax.plot(data['time'], data['[X]'])
 plt.savefig('images/example2.png')
+
+# --------------Plots for custom range----------------
+initial = .1
+k3_range = [0.1, 0.7, 2]
+fig = plt.figure()
+
+for i, k3 in enumerate(k3_range):
+    model['k3'] = k3
+    ax = fig.add_subplot(3, 1, i+1)
+    ax.title.set_text('k3 = ' + str(k3))
+    for k in range(0, 20, 1):
+        model.reset()
+        model['X'] = initial * k
+        data = model.simulate(0, 20, 100)
+        ax.plot(data['time'], data['[X]'])
+
+plt.subplots_adjust(left=0.1,
+                    bottom=0.05,
+                    right=0.9,
+                    top=0.9,
+                    wspace=0.4,
+                    hspace=0.4)
+plt.savefig('images/example3.png')
+
+# --------------Plots for custom target----------------
+
