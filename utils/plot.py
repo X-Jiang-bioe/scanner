@@ -1,9 +1,11 @@
 from matplotlib import pyplot as plt
 
 
-def plt_simple(tracker, results):
+def pltSimple(x, y):
     return None
 
+def pltOver(x, y)
+    return None
 
-def plt_heatmap(tracker, results):
+def pltHeatmap(x, y):
     return None

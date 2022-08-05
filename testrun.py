@@ -16,6 +16,7 @@ model test
 end
 """
 sbml = te.antimonyToSBML(mod)
-a = te.roadrunner.extended_roadrunner.ExtendedRoadRunner(sbml)
+a = te.loada(mod)
 
-print(type(a))
+b = a.getGlobalParameterIds()
+print(b)

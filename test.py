@@ -1,6 +1,6 @@
 import tellurium as te
 from load import load
-
+import utils
 mod = """
 model test
     compartment C1;
@@ -15,10 +15,19 @@ model test
     k1 = 1.0;
 end
 """
-model = load(mod)
+# model = load(mod)
 
-print(model.list_parameters())
+# # print(model.list_parameters())
 
-a = model.simulate(0,10,100)
+# a = model.list_parameters()
 
-print(a)
+
+def test(*args):
+    l = len(args)
+    lis = []
+    for i in range(0, l-2, 3):
+        lis.append(args[i: i+3])
+    return lis
+
+print(test(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12))
+print(test(range(3)))

@@ -3,7 +3,7 @@ import tellurium as te
 # import utils
 
 
-DEFAULT_SCAN_RANGE = [0.5, 1, 2]
+DEFAULT_SCAN_RANGE = (0.5, 2, 3)
 DEFAULT_SIM_PARAMETERS = (0, 10, 100)
 SCAN_TYPES = ['linear', 'logarithmic', 'exponential',
               'multiplicative', 'custom']
@@ -13,9 +13,9 @@ def default_target(data):
     '''
     Accepts the roadrunner.simulate output
 
-    Retunrns the final species values of the simulation
+    Retunrns the same thing
     '''
-    return data[0][1:]
+    return data
 
 
 class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
@@ -27,29 +27,28 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
 
     Attributes
     ----------
-    scan_target(NamedArray)-> any : function
+    scanTarget(NamedArray)-> any : function
         Function used to defnine what is examined during the parameter scan.
         Takes in the output of .ExtendedRoadRunner.simulate() and returns
         the target.
-        Initialized using self.set_target
+        Initialized using self.setTarget
+
+    output : list
+        list of outputs of self.scan() function
 
     results : list
-        list of outputs of self.scan_target function
+        list of raw simulation outputs
 
-    tracker : list
-        list of parameters that were passed to the model for simulation
+    scanRange : list
+        List/lists used to define the range of a parameter scan.
+        Initialized using self.setRange
 
-    scan_range()-> list : function
-        Function used to define the range of a parameter scan.
-        Takes in the self.results
-        Initialized using self.set_range
-
-    sim_parameters : tuple
+    simParameters : tuple
         arguments to pass down to .ExtendedRoadRunner.simulate
 
-    scan_parameterIds : list of string
+    scanParameterIds : list of string
         list of parameter Ids used in the parameter scan.
-        strings must mirror Ids from self.list_parameters()
+        strings must mirror Ids from self.listParameters()
 
 
     Methods
@@ -59,101 +58,104 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         runs time series simulation with (start, stop, #of points) as
         required parameters
 
-    set_parameters(params)
+    setParameters(params)
         selects up parameters for scanning
 
-    set_target(target)
+    setTarget(target)
         selects the scan target, accepts a function
         that manipulates NamedArray output of ExtendedRoadRunner.simulate()
 
-    set_range(scanRange, isUniform = True)
-        selects the range/ranges for the parameters during the scan,
-        accepts a list of values to pass to the scanner or a function that
-        returns uses the output of target function to return the next step for
-        a given parameter
-        for isUniform = False, list of lists order must correspond to the order
-        of self.scan_parameterIds
+    setRange(*rangeArgs, type = linear, uniform = True)
+        creates the range/ranges for the parameters during the scan,
+        accepts values to pass to the scanner or a list of values to pass
+        directly to the scan
 
     scan(save = False)
         runs the parameter scan, executes a dry run(no saving) by default
 
-    _display_state()
-        internal function; handles the terminal display updates during a
-        parameter scan
-    -------
+    plotSimple('Parameter name')
+        creates a simple plot of a given parameter time series
+        assumes that target was a time series
+
+    plotOver('Parameter name')
+        creates a series of plots w.r.t. a given parameter
+        assumes 2D scan and that target was a time series
+
+    plotHeatMap('parameter1', 'parameter2')
+        creates the elasticity heatmap
+        assumes 2D and a single value target output
     """
     def __init__(self, rr_model):  # only takes in sbml format
 
         # setup BEFORE the scan
         super().__init__(rr_model)
 
-        self.scan_target = default_target
-        self.scan_range = DEFAULT_SCAN_RANGE
-        self.scan_parameterIds = None
-        self.sim_parameters = DEFAULT_SIM_PARAMETERS
-        self.uniform_scan = True
+        self.target = default_target
+        self.scanRange = None
+        self.scanParameterIds = None
+        self.simParameters = DEFAULT_SIM_PARAMETERS
+        self.uniform = True
 
         # parameters filled DURING scan
-        self.tracker = []  # what values were passed to model
         self.output = []  # what was the return of the target function
-        self.results = {}  # ouput/initial simulation
+        self.results = []  # output/initial simulation
 
         return None
 
-    def list_parameters(self):
+    def listParameters(self):
         species = super().getFloatingSpeciesIds()
         constants = super().getGlobalParameterIds()
         return (species + constants)
 
-    def list_parameters_concentrations(self):
+    def listParametersConcentrations(self):
         return (super().getFloatingSpeciesConcentrationIds())
 
-    def scan(self):
-        return
-
-    def reset_scanner(self):
+    def resetScanner(self):
         super().resetAll()
-        self.scan_parameterIds = None
-        self.sim_parameters = DEFAULT_SIM_PARAMETERS
+        self.scanParameterIds = None
+        self.simParameters = DEFAULT_SIM_PARAMETERS
         self.target = default_target
         self.tracker = []
         self.output = []
         self.results = {}
         return
 
-    def set_parameters(self, parameters):
-        self.scan_parameterIds = parameters
+    def setParameters(self, parameters):
+        self.scanParameterIds = parameters
 
-    def set_target(self, target):
+    def setTarget(self, target):
         if type(target) is string:
-            self.target = (lambda data:  data[target][-1])
-            #  return the simulation result of a given target species
+            self.target = (lambda data:  data[target])
+            #  returns the simulation result of a given target species
         else:
             self.target = target
 
-    def set_scan_range(self, *range_args, type="linear", uniform=True):
-        self.uniform_scan = uniform
-        if type(range_args[0]) is list:
-            # unpacks the list(s), probably unnecessary
-            self.scan_range = [item for item in range_args]
+    def setScanRange(self, *rangeArgs, type="linear", uniform=True):
+        self.uniform = uniform
+        if uniform:
+            if type == "custom":
+                # unpacks the list, probably unnecessary here
+                # some sort of unpacking will be needed in
+                # the non-uniform case
+                self.scanRange = [item for item in rangeArgs[0]]
+            else:
+                self.scanRange = []
+                # call to the functions from utils to get the lists for
+                # multiplication
         else:
-            self.scan_range = []
-            # need to put the check for whether or not *range_args is
-            # divisible by 3 (not too many/too few arguments)
-            l = len(range_args)
-            lis = []
-            # !!! need a case for 3 args, below is for 3+ args
-            for i in range(0, l-2, 3):
-                lis.append(range_args[i: i+3])
-            for params in lis:
-                # call to the functions from utils to get the lists
+            # Non-uniform case handled here
+            # might be useful to use i as a tracker for rangeArgs
+            i = 0
+            for typ in type:
                 None
+
         return None
 
-    def save(self, path):
-        return
+    def scan(self):
+        # at least scan parameters must be predefined
+        # if scan range was not, call set_scan_range with default
+        # parameters after the scan parameter check
+        return None
 
-    def _runExperiment(self, params):
-        super().simulate(params)
-
-    # def
+    def plotSimple(self, targetID):
+        return None
