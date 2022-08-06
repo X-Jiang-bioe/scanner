@@ -58,6 +58,12 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         runs time series simulation with (start, stop, #of points) as
         required parameters
 
+    listParameters()
+        returns possible parameters to input to setParameters
+
+    getData()
+        returns the information from Model.output in an array
+
     setParameters(params)
         selects up parameters for scanning
 
@@ -118,6 +124,9 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
         self.tracker = []
         self.output = []
         self.results = {}
+        return
+
+    def getData(self):
         return
 
     def setParameters(self, parameters):
