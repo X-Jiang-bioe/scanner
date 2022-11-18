@@ -1,17 +1,17 @@
 import tellurium as te
-import model
+from scanner.model import Model
 """
 Set of functions that take in the model desctiption and return a model obnject
 """
 
 
 def antimony_load(string):
-    return model.Model(te.antimonyToSBML(string))
+    return Model(te.antimonyToSBML(string))
 
 
 def file_load(string):
     try:
-        return model.Model(string)
+        return Model(string)
     except:
         return(te.antimonyToSBML(string))
 

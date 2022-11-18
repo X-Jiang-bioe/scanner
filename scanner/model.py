@@ -134,7 +134,7 @@ class Model(te.roadrunner.extended_roadrunner.ExtendedRoadRunner):
 
     def setTarget(self, target):
         if type(target) is string:
-            self.target = (lambda data:  data[target])
+            self.target = (lambda data: data[target])
             #  returns the simulation result of a given target species
         else:
             self.target = target

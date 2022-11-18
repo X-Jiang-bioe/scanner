@@ -1,5 +1,5 @@
 import tellurium as te
-from load import load
+import scanner
 
 mod = """
 model test
@@ -20,3 +20,7 @@ a = te.loada(mod)
 
 b = a.getGlobalParameterIds()
 print(b)
+
+c = scanner.load(mod)
+d = c.listParameters()
+print(d)

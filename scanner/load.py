@@ -1,6 +1,6 @@
-import utils
 import re
-import model
+from scanner import utils
+from scanner.model import Model
 
 
 PROG = re.compile("(\/+.*)+")
@@ -8,14 +8,14 @@ PROG = re.compile("(\/+.*)+")
 
 def load(mod, fromSave=False):
     """
-    Used for loading in mondels/older simulations.
-    Returns an instance of a mod object
+    Used for loading in models/older simulations.
+    Returns an instance of a model object
 
     Attributes
     ----------
     mod : str
         A path to the supported file or
-        an antimony mod
+        an antimony string
 
     fromSave = False : bool
         Used to specify whether or not loader should expect
@@ -23,14 +23,14 @@ def load(mod, fromSave=False):
 
     Returns
     -------
-    mod : class
-        Primary class to interact witht the library
+    model : class
+        Primary class to interact with the library
         inherits from:
         tellurium.roadrunner.extended_roadrunner.ExtendedRoadRunner
     """
     if type(mod) is not str:
         try:
-            return model.Model(mod)
+            return Model(mod)
         except:
             err = """
             Something went wrong during loading,\n
