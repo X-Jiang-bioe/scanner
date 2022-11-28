@@ -1,5 +1,4 @@
 class doe_tool():
-    # TODO: model reset handling
     # TODO: visualization tools
     # TODO: handle models that are classes
 
