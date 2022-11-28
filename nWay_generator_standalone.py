@@ -1,4 +1,4 @@
-def _recursive_nWay_generator(input: list, output=[]):
+def _recursive_nWay_generator(input: list, output):
     '''
     Helper function; used to generate parameter-value pairs
     to submit to the model for the simulation. Bases the values on
@@ -22,18 +22,20 @@ def _recursive_nWay_generator(input: list, output=[]):
     '''
     # exit condition
     if len(input) == 0:
-        yield output
+        yield dict(output.items())
     # recursive loop
     else:
         curr = input[0]
         par_name = curr[0]
         for par_value in curr[1]:
-            output_new = output + [(par_name, par_value)]
+            output[par_name] = par_value
             # coroutines for the win!
-            yield from _recursive_nWay_generator(input[1:], output=output_new)
+            yield from _recursive_nWay_generator(input[1:], output=output)
 
 
 testlist = [('a', (1, 2, 3)), ('b', (4, 5, 6)), ('c', (7, 8))]
-
-for a in _recursive_nWay_generator(testlist):
-    print(a)
+a = {}
+gen = _recursive_nWay_generator(testlist, a)
+print(list(gen))
+# for a in gen:
+#     print(a)
