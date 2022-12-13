@@ -1,7 +1,9 @@
 # doe_tool
 
 Small lightweight package to simplify Design Of Expermient(DOE) simulations, i.e.
-parameter scanning for a given model
+parameter scanning for a given model.
+
+Tellurium extention has moved to its own fork
 
 ## Usage instructions
 
