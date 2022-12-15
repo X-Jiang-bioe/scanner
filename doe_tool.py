@@ -4,55 +4,79 @@ class doe_tool():
     # TODO: turn scan into a generator function
 
     def __init__(self, model, par_names, initial_vals):
-        self.model = model
+        self.model = self.load_model(model)
         self.par_names = par_names
         self.initial_vals = initial_vals
         self.simspec = {}  # what is passed to model for simulation
         self._setup()
         return None
 
-    def _setup(self):
-        # TODO: make initial_vals optional
-        for name, val in zip(self.par_names, self.initial_vals):
-            self.simspec[name] = val
-        # lists to fill after initialization, first element
-        # is the initial conditions run
-        # TODO: Need a better way to store scan results
-        #   perhaps do a n-dim DF with pandas
-        self.outputs = [self.model(self.simspec)]  # raw outputs of model
-        # specifications for each model simulation
-        self.simspecs = [self.simspec]
-        return
+    def _dec_coroutine(self, func):
+        """
+        decorator for coroutines
+        """
+        def new_func(item):
+            x = func(item)
+            x.send(None)
+            return x
+        return new_func
 
-    def get_outputs(self):
-        return self.outputs
+    @_dec_coroutine
+    def _func_wrapper(self, func):
+        '''
+        function coroutine wrapper
+        '''
+        output = None
+        while input := (yield output):
+            output = func(input)
 
-    def get_simspecs(self):
-        # specs = list(self._nWay_generator(self.scan_parameters))
-        # self.simspecs.append(specs)
-        return self.simspecs
+    # def _setup(self):
+    #     # TODO: make initial_vals optional
+    #     for name, val in zip(self.par_names, self.initial_vals):
+    #         self.simspec[name] = val
+    #     # lists to fill after initialization, first element
+    #     # is the initial conditions run
+    #     # TODO: Need a better way to store scan results
+    #     #   perhaps do a n-dim DF with pandas
+    #     self.outputs = [self.model(self.simspec)]  # raw outputs of model
+    #     # specifications for each model simulation
+    #     self.simspecs = [self.simspec]
+    #     return
 
-    def reset(self):
-        # if self.reset_sim is not None:
-        #     self.reset_sim()
-        self.outputs = []
-        self.simspecs = []
-        self._setup()
-        return
+    # def get_outputs(self):
+    #     return self.outputs
 
-    def simulate(self):
-        return self.model(self.simspec)
+    # def get_simspecs(self):
+    #     # specs = list(self.simspec_generator(self.scan_parameters))
+    #     # self.simspecs.append(specs)
+    #     return self.simspecs
 
-    def scan(self, scan_parameters):
-        simspecs = self._nWay_generator(scan_parameters)
-        for simspec in simspecs:
-            # print(simspec)
-            self.simspec = simspec
-            self.simspecs.append(simspec)
-            self.outputs.append(self.simulate())
-        return None
+    # def reset(self):
+    #     # if self.reset_sim is not None:
+    #     #     self.reset_sim()
+    #     self.outputs = []
+    #     self.simspecs = []
+    #     self._setup()
+    #     return
 
-    def _nWay_generator(self, input: list, output={}):
+    def load_model(self, model):
+        # TODO sbml models handling starts here
+        if callable(model):
+            return self._func_wrapper(model)
+
+    def simulate(self, simspec):
+        return self.model.send(simspec)
+
+    # def scan(self, scan_parameters):
+    #     simspecs = self.simspec_generator(scan_parameters)
+    #     for simspec in simspecs:
+    #         # print(simspec)
+    #         self.simspec = simspec
+    #         self.simspecs.append(simspec)
+    #         self.outputs.append(self.simulate())
+    #     return None
+
+    def simspec_generator(self, input: list, output={}):
         '''
         Helper function; used to generate parameter-value pairs
         to submit to the model for the simulation.
@@ -82,9 +106,10 @@ class doe_tool():
             par_name = curr[0]
             for par_value in curr[1]:
                 output[par_name] = par_value
-                # coroutines for the win!
-                yield from self._nWay_generator(
+                yield from self.simspec_generator(
                     input[1:], output=output)
+
+
 
 
 if __name__ == "__main__":
