@@ -1,3 +1,14 @@
+def _dec_coroutine(func):
+    """
+    decorator for coroutines
+    """
+    def new_func(self, item):
+        x = func(self, item)
+        x.send(None)
+        return x
+    return new_func
+
+
 class doe_tool():
     # TODO: visualization tools
     # TODO: handle models that are classes
@@ -7,19 +18,8 @@ class doe_tool():
         self.model = self.load_model(model)
         self.par_names = par_names
         self.initial_vals = initial_vals
-        self.simspec = {}  # what is passed to model for simulation
-        self._setup()
+        # self._setup()
         return None
-
-    def _dec_coroutine(self, func):
-        """
-        decorator for coroutines
-        """
-        def new_func(item):
-            x = func(item)
-            x.send(None)
-            return x
-        return new_func
 
     @_dec_coroutine
     def _func_wrapper(self, func):
@@ -27,48 +27,29 @@ class doe_tool():
         function coroutine wrapper
         '''
         output = None
-        while input := (yield output):
+        while True:
+            input = (yield output)
             output = func(input)
 
-    # def _setup(self):
-    #     # TODO: make initial_vals optional
-    #     for name, val in zip(self.par_names, self.initial_vals):
-    #         self.simspec[name] = val
-    #     # lists to fill after initialization, first element
-    #     # is the initial conditions run
-    #     # TODO: Need a better way to store scan results
-    #     #   perhaps do a n-dim DF with pandas
-    #     self.outputs = [self.model(self.simspec)]  # raw outputs of model
-    #     # specifications for each model simulation
-    #     self.simspecs = [self.simspec]
-    #     return
-
-    # def get_outputs(self):
-    #     return self.outputs
-
-    # def get_simspecs(self):
-    #     # specs = list(self.simspec_generator(self.scan_parameters))
-    #     # self.simspecs.append(specs)
-    #     return self.simspecs
-
-    # def reset(self):
-    #     # if self.reset_sim is not None:
-    #     #     self.reset_sim()
-    #     self.outputs = []
-    #     self.simspecs = []
-    #     self._setup()
-    #     return
-
     def load_model(self, model):
-        # TODO sbml models handling starts here
+        # TODO sbml model handling
         if callable(model):
             return self._func_wrapper(model)
 
     def simulate(self, simspec):
         return self.model.send(simspec)
 
+    # TODO: postprocessing only makes sense with sbml models,
+    # consider optional skip
+    def load_post_processor(self, func):
+        self.post_processor = self._func_wrapper(func)
+        return
+
+    def send_post_processor(self, data):
+        return self.post_processor.send(data)
+
     # def scan(self, scan_parameters):
-    #     simspecs = self.simspec_generator(scan_parameters)
+    #     simspecs = self._grid(scan_parameters)
     #     for simspec in simspecs:
     #         # print(simspec)
     #         self.simspec = simspec
@@ -76,7 +57,7 @@ class doe_tool():
     #         self.outputs.append(self.simulate())
     #     return None
 
-    def simspec_generator(self, input: list, output={}):
+    def simspec_generator_grid(self, input: list, output={}):
         '''
         Helper function; used to generate parameter-value pairs
         to submit to the model for the simulation.
@@ -106,10 +87,13 @@ class doe_tool():
             par_name = curr[0]
             for par_value in curr[1]:
                 output[par_name] = par_value
-                yield from self.simspec_generator(
+                yield from self.simspec_generator_grid(
                     input[1:], output=output)
 
-
+    # @_dec_coroutine
+    # def simspec_generator_random(self, ranges):
+    #     while True:
+    #         input = (yield)
 
 
 if __name__ == "__main__":
@@ -118,10 +102,14 @@ if __name__ == "__main__":
         return dic['x'] ** dic['y']
 
     scanner = doe_tool(testfun, ('x', 'y'), (5, 5))
-    print(scanner.get_outputs())
 
-    scanner.scan((('x', [0, 1, 2, 3, 4]), ('y', range(2))))
-    print('----------')
-    print(scanner.get_outputs())
-    print('----------')
-    print(scanner.get_simspecs())
+    # a = scanner.model.send(('x', [0, 1, 2, 3, 4]), ('y', range(2)))
+    a = scanner.simulate({'x': 2, 'y': 2})
+    print(a)
+    # print(scanner.get_outputs())
+
+    # scanner.scan((('x', [0, 1, 2, 3, 4]), ('y', range(2))))
+    # print('----------')
+    # print(scanner.get_outputs())
+    # print('----------')
+    # print(scanner.get_simspecs())
