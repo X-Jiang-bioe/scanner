@@ -1,12 +1,5 @@
-def _dec_coroutine(func):
-    """
-    decorator for coroutines
-    """
-    def new_func(self, item):
-        x = func(self, item)
-        x.send(None)
-        return x
-    return new_func
+from utils import _dec_coroutine
+import conditionals
 
 
 class doe_tool():
@@ -32,7 +25,7 @@ class doe_tool():
             output = func(input)
 
     def load_model(self, model):
-        # TODO sbml model handling
+        # TODO: sbml model handling
         if callable(model):
             return self._func_wrapper(model)
 
@@ -47,6 +40,17 @@ class doe_tool():
 
     def send_post_processor(self, data):
         return self.post_processor.send(data)
+
+    @_dec_coroutine
+    def conditional(self, *args, **kwargs):
+        type = kwargs['type']
+        #setup
+        while True:
+            input = (yield None)
+            if input == 1:
+                yield from conditionals.boundary_cond()
+            elif input ==2:
+                pass
 
     # def scan(self, scan_parameters):
     #     simspecs = self._grid(scan_parameters)
