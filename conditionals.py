@@ -27,7 +27,7 @@ def boundary_cond(*range):
     - TypeError: If the input value is not valid (int or float or None).
 
     """
-    print(range)
+    # print(range)
     if len(range) == 1:
         lower_bound, upper_bound = range[0], None
     elif len(range) == 2:
@@ -52,7 +52,11 @@ def boundary_cond(*range):
             if input is None:
                 pass
             else:
-                raise TypeError
+                print(f'range is: {range}')
+                print(f'lbound: {lower_bound}, ubound:{upper_bound}')
+                print(f'the input is: {input}')
+                raise TypeError(
+                    'conditionals.boundary_cond had unexpected type')
 
 
 @_dec_coroutine

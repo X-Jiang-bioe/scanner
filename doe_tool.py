@@ -3,14 +3,16 @@ import conditionals
 
 
 class doe_tool():
+    # TODO: reset functionality
     # TODO: visualization tools
-    # TODO: handle models that are classes
+    # TODO: handle models that are classes?
     # TODO: turn scan into a generator function
 
     def __init__(self, model, par_names, initial_vals):
         self.model = self.load_model(model)
         self.par_names = par_names
         self.initial_vals = initial_vals
+        self.conditional = None
         # self._setup()
         return None
 
@@ -36,21 +38,29 @@ class doe_tool():
     # consider optional skip
     def load_post_processor(self, func):
         self.post_processor = self._func_wrapper(func)
-        return
+        return None
 
     def send_post_processor(self, data):
         return self.post_processor.send(data)
 
     @_dec_coroutine
-    def conditional(self, *args, **kwargs):
-        type = kwargs['type']
-        #setup
-        while True:
-            input = (yield None)
-            if input == 1:
-                yield from conditionals.boundary_cond()
-            elif input ==2:
-                pass
+    def _conditional(self, type, *args, **kwargs):
+        # TODO: write out the docstring explaining what
+        # variables to pass down in each case
+        # TODO: consider custom function handling
+        if type == 'boundary':
+            yield from conditionals.boundary_cond(*args, **kwargs)
+        elif type == 'error_range':
+            yield from conditionals.range_cond(*args, **kwargs)
+        else:
+            raise ValueError('Invalid value for type')
+
+    def set_conditional(self, type, *args, **kwargs):
+        self.conditional = self._conditional(type, *args, **kwargs)
+        return None
+
+    def send_conditional(self, value):
+        return self.conditional.send(value)
 
     # def scan(self, scan_parameters):
     #     simspecs = self._grid(scan_parameters)
@@ -110,8 +120,9 @@ if __name__ == "__main__":
     # a = scanner.model.send(('x', [0, 1, 2, 3, 4]), ('y', range(2)))
     a = scanner.simulate({'x': 2, 'y': 2})
     print(a)
+    scanner.set_conditional('boundary', 0, 5)
+    print(scanner.send_conditional(6))
     # print(scanner.get_outputs())
-
     # scanner.scan((('x', [0, 1, 2, 3, 4]), ('y', range(2))))
     # print('----------')
     # print(scanner.get_outputs())
