@@ -3,15 +3,16 @@ import conditionals
 
 
 class doe_tool():
+    # TODO: scanning algo
     # TODO: reset functionality
     # TODO: visualization tools
     # TODO: handle models that are classes?
-    # TODO: turn scan into a generator function
 
     def __init__(self, model, par_names, initial_vals):
         self.model = self.load_model(model)
         self.par_names = par_names
         self.initial_vals = initial_vals
+        self.post_processor = lambda x: x  # hacky way of 'optionality'
         self.conditional = None
         # self._setup()
         return None
@@ -35,18 +36,22 @@ class doe_tool():
         return self.model.send(simspec)
 
     # TODO: postprocessing only makes sense with sbml models,
-    # consider optional skip
+    # consider an ACTUAL optional skip
     def load_post_processor(self, func):
         self.post_processor = self._func_wrapper(func)
         return None
 
     def send_post_processor(self, data):
-        return self.post_processor.send(data)
+        try:
+            return self.post_processor.send(data)
+        # part of the hacky optional skip
+        except AttributeError:
+            return self.post_processor(data)
 
     @_dec_coroutine
     def _conditional(self, type, *args, **kwargs):
         # TODO: write out the docstring explaining what
-        # variables to pass down in each case
+        # variables to pass down in what case
         # TODO: consider custom function handling
         if type == 'boundary':
             yield from conditionals.boundary_cond(*args, **kwargs)
@@ -62,14 +67,19 @@ class doe_tool():
     def send_conditional(self, value):
         return self.conditional.send(value)
 
-    # def scan(self, scan_parameters):
-    #     simspecs = self._grid(scan_parameters)
-    #     for simspec in simspecs:
-    #         # print(simspec)
-    #         self.simspec = simspec
-    #         self.simspecs.append(simspec)
-    #         self.outputs.append(self.simulate())
-    #     return None
+    def scan_demo(self, scan_parameters):
+        """
+        This func is used in the demo for demonstration purposes
+        """
+        simspecs = self.simspec_generator_grid(scan_parameters)
+        for simspec in simspecs:
+            a = self.send_post_processor(self.simulate(simspec))
+            if self.send_conditional(a):
+                self.simspec = simspec
+                return simspec
+            else:
+                continue
+        return 'none found'
 
     def simspec_generator_grid(self, input: list, output={}):
         '''
@@ -122,9 +132,7 @@ if __name__ == "__main__":
     print(a)
     scanner.set_conditional('boundary', 0, 5)
     print(scanner.send_conditional(6))
-    # print(scanner.get_outputs())
-    # scanner.scan((('x', [0, 1, 2, 3, 4]), ('y', range(2))))
-    # print('----------')
-    # print(scanner.get_outputs())
-    # print('----------')
-    # print(scanner.get_simspecs())
+    scanner.set_conditional('error_range', value=10, error=1)
+    print(scanner.send_conditional(10))
+    scan_parameters = (('x', [0, 1, 2, 3, 4]), ('y', range(5)))
+    print(scanner.scan_demo(scan_parameters))
