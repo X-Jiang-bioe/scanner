@@ -67,6 +67,22 @@ class doe_tool():
     def send_conditional(self, value):
         return self.conditional.send(value)
 
+    # TODO:
+    # only works with grid, do the same for other scans, once algo is done
+    # perhaps do a dataframe
+    # probably can do the op.get(function, fail condition) thing
+    # directly into the scan algorithm
+    def get_simulations(self, scan_parameters):
+        sims = []
+        results = []
+        specs = []
+        simspecs = self.simspec_generator_grid(scan_parameters)
+        for simspec in simspecs:
+            specs.append(simspec)
+            sims.append(self.simulate(specs[-1]))
+            results.append(self.send_post_processor(sims[-1]))
+        return sims, results, specs
+
     def scan_demo(self, scan_parameters):
         """
         This func is used in the demo for demonstration purposes
@@ -80,6 +96,10 @@ class doe_tool():
             else:
                 continue
         return 'none found'
+
+    def scan(self, *args, **kwargs):
+
+        return None
 
     def simspec_generator_grid(self, input: list, output={}):
         '''
