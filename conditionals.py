@@ -41,11 +41,14 @@ def boundary_cond(*range):
         input = (yield output)
         try:
             if lower_bound is None:
-                output = input <= upper_bound
+                # the None part in the tuples is for future
+                # simspec generators and conditionals,
+                # completely removable at this point
+                output = (input <= upper_bound, None)
             elif upper_bound is None:
-                output = input >= lower_bound
+                output = (input >= lower_bound, None)
             else:
-                output = lower_bound <= input <= upper_bound
+                output = (lower_bound <= input <= upper_bound, None)
         except TypeError:
             # doing this because of the decorator behaviour
             # when using 'yield from' to reference this generator func
@@ -56,7 +59,7 @@ def boundary_cond(*range):
                 print(f'lbound: {lower_bound}, ubound:{upper_bound}')
                 print(f'the input is: {input}')
                 raise TypeError(
-                    'conditionals.boundary_cond had unexpected type')
+                    'conditionals.boundary_cond saw unexpected type')
 
 
 @_dec_coroutine
@@ -81,6 +84,12 @@ def range_cond(value, error):
     while True:
         yield from boundary_cond(lower_bound, upper_bound)
 
+
+# @_dec_coroutine
+# def iteration_num(num, cond):
+#     output = None
+#     while True:
+#         input = (yield output)
 
 if __name__ == '__main__':
     test = boundary_cond(0, 5)

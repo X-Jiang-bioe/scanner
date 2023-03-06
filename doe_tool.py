@@ -1,19 +1,22 @@
-from utils import _dec_coroutine
+from utils import _dec_coroutine, invalid_generator, rr_coroutine
 import conditionals
+import simspec_generators
+import tellurium as te
 
 
 class doe_tool():
-    # TODO: scanning algo
     # TODO: reset functionality
     # TODO: visualization tools
-    # TODO: handle models that are classes?
 
-    def __init__(self, model, par_names, initial_vals):
-        self.model = self.load_model(model)
-        self.par_names = par_names
-        self.initial_vals = initial_vals
+    def __init__(self, model, sim_time=(0, 50, 100)):
+        self.model = model
+        self.sim_time = sim_time
+        self.coroutine_model = self.load_model(model)
         self.post_processor = lambda x: x  # hacky way of 'optionality'
         self.conditional = None
+        self.simspecs = []
+        self.sims = []
+        self.results = []
         # self._setup()
         return None
 
@@ -28,12 +31,30 @@ class doe_tool():
             output = func(input)
 
     def load_model(self, model):
-        # TODO: sbml model handling
+        # TODO: better way of changing time of simulations
+        # TODO: graphing capabilities
         if callable(model):
             return self._func_wrapper(model)
+        else:
+            # assume any given string is antimony or sbml file
+            try:
+                r = te.loadSBMLModel(model)
+            except:
+                r = te.loada(model)
+            # !!! The simulation range specification is here
+            # Bad spot, can't think of a better one
+            return rr_coroutine(r, *self.sim_time)
+
+    def change_model(self, model=None, sim_time=None):
+        if sim_time is not None:
+            self.sim_time = sim_time
+        if model is not None:
+            self.model = model
+        self.coroutine_model = self.load_model(model)
+        return None
 
     def simulate(self, simspec):
-        return self.model.send(simspec)
+        return self.coroutine_model.send(simspec)
 
     # TODO: postprocessing only makes sense with sbml models,
     # consider an ACTUAL optional skip
@@ -58,7 +79,7 @@ class doe_tool():
         elif type == 'error_range':
             yield from conditionals.range_cond(*args, **kwargs)
         else:
-            raise ValueError('Invalid value for type')
+            raise ValueError('Invalid conditional type')
 
     def set_conditional(self, type, *args, **kwargs):
         self.conditional = self._conditional(type, *args, **kwargs)
@@ -67,77 +88,56 @@ class doe_tool():
     def send_conditional(self, value):
         return self.conditional.send(value)
 
-    # TODO:
-    # only works with grid, do the same for other scans, once algo is done
-    # perhaps do a dataframe
-    # probably can do the op.get(function, fail condition) thing
-    # directly into the scan algorithm
-    def get_simulations(self, scan_parameters):
-        sims = []
-        results = []
-        specs = []
-        simspecs = self.simspec_generator_grid(scan_parameters)
-        for simspec in simspecs:
-            specs.append(simspec)
-            sims.append(self.simulate(specs[-1]))
-            results.append(self.send_post_processor(sims[-1]))
-        return sims, results, specs
+    def optimize_demo(self, scan_type, scan_parameters):
+        """
+        Version of optimize that probably only works with
+        grid simspec generator
+        used in the demo
 
-    def scan_demo(self, scan_parameters):
+        Returns the set of parameters for a simulation that
+        satisfy specified condition
         """
-        This func is used in the demo for demonstration purposes
-        """
-        simspecs = self.simspec_generator_grid(scan_parameters)
-        for simspec in simspecs:
-            a = self.send_post_processor(self.simulate(simspec))
-            if self.send_conditional(a):
-                self.simspec = simspec
-                return simspec
-            else:
+        generator = simspec_generators.generator_list.get(
+            scan_type, invalid_generator)
+        simspecs = generator(scan_parameters)
+        cond = None
+        state = False
+        while not state:
+            try:
+                simspec = simspecs.send(cond)
+                state, cond = self.send_conditional(
+                    self.send_post_processor(
+                        self.simulate(simspec)
+                    )
+                )
+            except StopIteration:
+                print('No specification that satisfies condition found')
+                return None
+        return simspec
+
+    def scan(self, scan_type, scan_parameters):
+        generator = simspec_generators.generator_list.get(
+            scan_type, invalid_generator)
+        simspecs = generator(scan_parameters)
+        cond = None
+        while True:
+            try:
+                self.simspecs.append(simspecs.send(cond))
+                self.sims.append(self.simulate(self.simspecs[-1]))
+                self.results.append(self.send_post_processor(self.sims[-1]))
+                state, cond = self.send_conditional(self.results[-1])
+                # TODO: anything except grid needs some stopping point
+                # future extention to handle more complex generators put here
+                # if state:
+                #     raise(StopIteration)
                 continue
-        return 'none found'
-
-    def scan(self, *args, **kwargs):
+            except StopIteration:
+                break
 
         return None
 
-    def simspec_generator_grid(self, input: list, output={}):
-        '''
-        Helper function; used to generate parameter-value pairs
-        to submit to the model for the simulation.
-
-        Parameters
-        ----------
-        input : list of tuple
-            every tuple of the list must be of the form:
-            ``('name_of_parameter', iterable_of_values)``
-
-        output : list, optional
-            parameter used for recursion; allows for iterable building
-            across subgenerators
-
-        Returns
-        -------
-        Generator :
-            Specifications used for simulation setup of the form:
-            ``[('par1', val1), ('par2', val2), ...]``
-        '''
-        # exit condition
-        if len(input) == 0:
-            yield dict(output.items())
-        # recursive loop
-        else:
-            curr = input[0]
-            par_name = curr[0]
-            for par_value in curr[1]:
-                output[par_name] = par_value
-                yield from self.simspec_generator_grid(
-                    input[1:], output=output)
-
-    # @_dec_coroutine
-    # def simspec_generator_random(self, ranges):
-    #     while True:
-    #         input = (yield)
+    def get_scan(self):
+        return self.simspecs, self.sims, self.results
 
 
 if __name__ == "__main__":
@@ -155,4 +155,9 @@ if __name__ == "__main__":
     scanner.set_conditional('error_range', value=10, error=1)
     print(scanner.send_conditional(10))
     scan_parameters = (('x', [0, 1, 2, 3, 4]), ('y', range(5)))
-    print(scanner.scan_demo(scan_parameters))
+    scanner.scan('grid', scan_parameters)
+    specs, sims, res = scanner.get_scan()
+
+    for i in (specs, sims, res):
+        print(f'{i}')
+        print('_________')
