@@ -1,8 +1,10 @@
-def _recursive_nWay_generator(input: list, output):
+# These functions are used to generate the simulation specifications
+# for the scanner to use during the search
+
+def grid_search(input: list, output={}):
     '''
-    Helper function; used to generate parameter-value pairs
-    to submit to the model for the simulation. Bases the values on
-    the calculated ranges.
+    Used to generate parameter-value pairs
+    to submit to the model for the simulation.
 
     Parameters
     ----------
@@ -11,7 +13,7 @@ def _recursive_nWay_generator(input: list, output):
         ``('name_of_parameter', iterable_of_values)``
 
     output : list, optional
-        parameter used for recursion; allows for list building
+        parameter used for recursion; allows for iterable building
         across subgenerators
 
     Returns
@@ -29,13 +31,15 @@ def _recursive_nWay_generator(input: list, output):
         par_name = curr[0]
         for par_value in curr[1]:
             output[par_name] = par_value
-            # coroutines for the win!
-            yield from _recursive_nWay_generator(input[1:], output=output)
+            yield from grid_search(
+                input[1:], output=output)
 
 
-testlist = [('a', (1, 2, 3)), ('b', (4, 5, 6)), ('c', (7, 8))]
-a = {}
-gen = _recursive_nWay_generator(testlist, a)
-print(list(gen))
-# for a in gen:
-#     print(a)
+def random_search(paramters):
+    None
+
+
+generator_list = {
+    'grid': grid_search,
+    'random': random_search
+}
