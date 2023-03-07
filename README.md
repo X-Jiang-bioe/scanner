@@ -1,11 +1,11 @@
 # doe_tool
 
 Small lightweight package to simplify Design Of Expermient(DOE) simulations, i.e.
-parameter scanning for a given model.
+parameter scanning for a given model. Supports SBML and antimony models as is.
 
-Tellurium extention has moved to its own fork
 
 ## Usage instructions
+0. ### For the SBML/Antomony and more details, see the demo.ipynb
 
 1. ### Function requirements:
 
@@ -38,14 +38,14 @@ Tellurium extention has moved to its own fork
         ```
     * extracting information:
 
-        outputs of the example function
+        To get the information from scan
         ```
-        ex_scan.get_outputs()
+        specs, sims, results = ex_scan.get_scan()
         ```
-        parameter values used (id of iterables correlate)
-        ```
-        ex_scan.get_simspecs()
-        ```
+        specs are the parameter calues used in a given run
+        sims are the simulations
+        results are outputs from a post processor(if one was created)
+        
 
 
 
